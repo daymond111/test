@@ -9,6 +9,8 @@ def execute_command(command):
     match command:
         case "exit 0":
             sys.exit(0)
+        case command if command.startswith("echo "):
+            print(command[5:])
         case _:
             print(f"{command}: command not found")
 
