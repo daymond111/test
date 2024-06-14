@@ -1,15 +1,16 @@
 import sys
 
-VALID_COMMANDS = []
-
 def prompt_user():
     sys.stdout.write("$ ")
     sys.stdout.flush()
     return input()
 
 def execute_command(command):
-    if command not in VALID_COMMANDS:
-        print(f"{command}: command not found")
+    match command:
+        case "exit 0":
+            sys.exit(0)
+        case _:
+            print(f"{command}: command not found")
 
 def main():
     while True:
