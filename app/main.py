@@ -29,6 +29,9 @@ def execute_built_in_command(command, args):
                     print(f"{args[0]} is {program_path}")
                 else:
                     print(f"{args[0]}: not found")
+        case 'pwd':
+            absolute_path = os.path.abspath('./')
+            print(absolute_path)
 
 def execute_external_command(command, args):
     program_path = find_program_path(command)
