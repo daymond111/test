@@ -1,54 +1,90 @@
 import os
 import sys
+import subprocess
 
-BUILT_IN_COMMANDS = ['echo', 'exit', 'type']
-PATHS = os.environ['PATH'].split(os.pathsep)
+CURRENT_DIRECTORY = os.path.abspath('./')
+BUILT_IN_COMMANDS = ['echo', 'exit', 'type', 'pwd', 'cd']
 
-def get_user_input():
+def get_os_commands():
+    if sys.platform.startswith('linux'):
+        bin_dirs = ['/bin', '/usr/bin']
+        commands = []
+        for dir in bin_dirs:
+            commands.extend(os.listdir(dir))
+        return commands
+    elif sys.platform.startswith('win'):
+        paths = os.environ['PATH'].split(os.pathsep)
+        commands = []
+        for path in paths:
+            commands.extend(os.listdir(path))
+        return commands
+    else:
+        return []
+
+def get_user_command():
     return input('$ ')
 
-def find_program_path(command):
-    for path in PATHS:
-        program_path = os.path.join(path, command)
-        if os.path.isfile(program_path):
-            return program_path
+def find_executable_path(command):
+    paths = os.environ['PATH'].split(os.pathsep)
+    for path in paths:
+        executable_path = os.path.join(path, command)
+        if os.path.isfile(executable_path):
+            return executable_path
     return None
 
-def execute_built_in_command(command, args):
+def execute_built_in_command(command, arguments):
+    global CURRENT_DIRECTORY
     match command:
         case 'exit':
             sys.exit(0)
         case 'echo':
-            print(' '.join(args))
+            print(' '.join(arguments))
         case 'type':
-            if args[0] in BUILT_IN_COMMANDS:
-                print(f"{args[0]} is a shell builtin")
+            executable_path = find_executable_path(arguments[0])
+            if arguments[0] in BUILT_IN_COMMANDS:
+                print(f"{arguments[0]} is a shell builtin")
+            elif executable_path:
+                print(f"{arguments[0]} is {executable_path}")
             else:
-                program_path = find_program_path(args[0])
-                if program_path:
-                    print(f"{args[0]} is {program_path}")
-                else:
-                    print(f"{args[0]}: not found")
+                print(f"{arguments[0]}: not found")
         case 'pwd':
-            absolute_path = os.path.abspath('./')
-            print(absolute_path)
+            print(CURRENT_DIRECTORY)
+        case 'cd':
+            if os.path.isdir(arguments[0]):
+                CURRENT_DIRECTORY = os.path.abspath(arguments[0])
+            else:
+                print(f"cd: {arguments[0]}: No such file or directory")
 
-def execute_external_command(command, args):
-    program_path = find_program_path(command)
-    if program_path:
-        os.system(f'{program_path} {" ".join(args)}')
+def execute_external_command(command, arguments):
+    if command in BUILT_IN_COMMANDS:
+        execute_built_in_command(command, arguments)
+    elif command in OS_COMMANDS:
+        executable_path = find_executable_path(command)
+        if executable_path:
+            try:
+                subprocess.run([executable_path, *arguments], check=True)
+            except subprocess.CalledProcessError as e:
+                print(f"Error executing command: {e}")
+        else:
+            print(f"{command}: not found")
     else:
-        print(f'{command}: command not found')
+        try:
+            subprocess.run([command, *arguments], check=True)
+        except FileNotFoundError:
+            print(f"{command}: not found")
+        except subprocess.CalledProcessError as e:
+            print(f"Error executing command: {e}")
+
 
 def main():
+    global OS_COMMANDS, CURRENT_DIRECTORY
+    OS_COMMANDS = get_os_commands()
+
     while True:
-        command = get_user_input()
-        command_parts = command.split()
+        user_input = get_user_command()
+        command_parts = user_input.split()
         if command_parts:
-            if command_parts[0] in BUILT_IN_COMMANDS:
-                execute_built_in_command(command_parts[0], command_parts[1:])
-            else:
-                execute_external_command(command_parts[0], command_parts[1:])
+            execute_external_command(command_parts[0], command_parts[1:])
 
 if __name__ == "__main__":
     main()
