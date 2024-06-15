@@ -51,16 +51,20 @@ def execute_built_in_command(command, arguments):
             print(CURRENT_DIRECTORY)
         case 'cd':
             if len(arguments) > 0:
-                new_dir = arguments[0]
-                if os.path.isabs(new_dir):
-                    CURRENT_DIRECTORY = os.path.abspath(new_dir)
+                if arguments[0] == "~":
+                    CURRENT_DIRECTORY = os.path.expanduser("~")
                 else:
-                    CURRENT_DIRECTORY = os.path.abspath(os.path.join(CURRENT_DIRECTORY, new_dir))
+                    new_dir = arguments[0]
+                    if os.path.isabs(new_dir):
+                        CURRENT_DIRECTORY = os.path.abspath(new_dir)
+                    else:
+                        CURRENT_DIRECTORY = os.path.abspath(os.path.join(CURRENT_DIRECTORY, new_dir))
                 if not os.path.isdir(CURRENT_DIRECTORY):
                     print(f"cd: {arguments[0]}: No such file or directory")
                     CURRENT_DIRECTORY = os.path.abspath('./')
             else:
-                CURRENT_DIRECTORY = os.path.abspath('./')
+                CURRENT_DIRECTORY = os.path.expanduser("~")
+
 
 
 def execute_external_command(command, arguments):
